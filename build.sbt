@@ -1,4 +1,4 @@
-name := "sangria-akka-http-example"
+name := "sangria-sachin"
 version := "0.1.0-SNAPSHOT"
 
 description := "An example GraphQL server written with akka-http, circe and sangria."

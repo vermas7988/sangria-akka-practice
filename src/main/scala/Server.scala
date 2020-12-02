@@ -29,11 +29,11 @@ object Server extends App with CorsSupport {
         prepareGraphQLRequest {
           case Success(GraphQLRequest(query, variables, operationName)) =>
             val middleware = if (tracing.isDefined) SlowLog.apolloTracing :: Nil else Nil
-            val deferredResolver = DeferredResolver.fetchers(SchemaDefinition.characters)
+            val deferredResolver = DeferredResolver.fetchers(SchemaDefinition.animals)
             val graphQLResponse = Executor.execute(
-                schema = SchemaDefinition.StarWarsSchema,
+                schema = SchemaDefinition.AnimalSagaSchema,
                 queryAst = query,
-                userContext = new CharacterRepo,
+                userContext = new AnimalRepo,
                 variables = variables,
                 operationName = operationName,
                 middleware = middleware,

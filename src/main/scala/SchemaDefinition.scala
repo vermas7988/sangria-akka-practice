@@ -1,4 +1,7 @@
+import monocle.Monocle.toApplyFoldOps
 import sangria.execution.deferred.{Fetcher, HasId}
+import sangria.macros.derive
+import sangria.macros.derive.InputObjectTypeName
 import sangria.schema._
 
 import scala.concurrent.Future
@@ -7,119 +10,133 @@ import scala.concurrent.Future
  * Defines a GraphQL schema for the current project
  */
 object SchemaDefinition {
-  /**
-    * Resolves the lists of characters. These resolutions are batched and
-    * cached for the duration of a query.
-    */
-  val characters = Fetcher.caching(
-    (ctx: CharacterRepo, ids: Seq[String]) =>
-      Future.successful(ids.flatMap(id => ctx.getHuman(id) orElse ctx.getDroid(id))))(HasId(_.id))
 
-  val EpisodeEnum = EnumType(
-    "Episode",
-    Some("One of the films in the Star Wars Trilogy"),
+  val animals = Fetcher.caching(
+    (ctx: AnimalRepo, ids: Seq[String]) =>
+      Future.successful(ids.flatMap(id => ctx.getDog(id) orElse ctx.getBear(id))))(HasId(_.id))
+
+  val AreaEnum = EnumType(
+    "Area",
+    Some("Areas in which animal can be found"),
     List(
-      EnumValue("NEWHOPE",
-        value = Episode.NEWHOPE,
-        description = Some("Released in 1977.")),
-      EnumValue("EMPIRE",
-        value = Episode.EMPIRE,
-        description = Some("Released in 1980.")),
-      EnumValue("JEDI",
-        value = Episode.JEDI,
-        description = Some("Released in 1983."))))
+      EnumValue("EUROPE",
+        value = Area.EUROPE,
+        description = Some("Weather is cold")),
+      EnumValue("ASIA",
+        value = Area.ASIA,
+        description = Some("Mixed weather,")),
+      EnumValue("AFRICA",
+        value = Area.AFRICA,
+        description = Some("Hot weather"))))
 
-  val Character: InterfaceType[CharacterRepo, Character] =
+  val Animal: InterfaceType[AnimalRepo, Animal] =
     InterfaceType(
-      "Character",
-      "A character in the Star Wars Trilogy",
-      () => fields[CharacterRepo, Character](
+      "Animal",
+      "A animal",
+      () => fields[AnimalRepo, Animal](
         Field("id", StringType,
           Some("The id of the character."),
           resolve = _.value.id),
         Field("name", OptionType(StringType),
           Some("The name of the character."),
           resolve = _.value.name),
-        Field("friends", ListType(Character),
-          Some("The friends of the character, or an empty list if they have none."),
-          resolve = ctx => characters.deferSeqOpt(ctx.value.friends)),
-        Field("appearsIn", OptionType(ListType(OptionType(EpisodeEnum))),
-          Some("Which movies they appear in."),
+        Field("friends", ListType(Animal),
+          Some("The friends of the Animal, or an empty list if they have none."),
+          resolve = ctx => animals.deferSeqOpt(ctx.value.friends)),
+        Field("appearsIn", OptionType(ListType(OptionType(AreaEnum))),
+          Some("Which area they appear in."),
           resolve = _.value.appearsIn map (e => Some(e)))
       ))
 
-  val Human =
+  val Bear =
     ObjectType(
-      "Human",
-      "A humanoid creature in the Star Wars universe.",
-      interfaces[CharacterRepo, Human](Character),
-      fields[CharacterRepo, Human](
+      "Bear",
+      "A bear.",
+      interfaces[AnimalRepo, Bear](Animal),
+      fields[AnimalRepo, Bear](
         Field("id", StringType,
-          Some("The id of the human."),
+          Some("The id of the bear."),
           resolve = _.value.id),
         Field("name", OptionType(StringType),
-          Some("The name of the human."),
+          Some("The name of the bear."),
           resolve = _.value.name),
-        Field("friends", ListType(Character),
-          Some("The friends of the human, or an empty list if they have none."),
-          resolve = ctx => characters.deferSeqOpt(ctx.value.friends)),
-        Field("appearsIn", OptionType(ListType(OptionType(EpisodeEnum))),
-          Some("Which movies they appear in."),
+        Field("friends", ListType(Animal),
+          Some("The friends of the bear, or an empty list if they have none."),
+          resolve = ctx => animals.deferSeqOpt(ctx.value.friends)),
+        Field("appearsIn", OptionType(ListType(OptionType(AreaEnum))),
+          Some("Which areas they appear in."),
           resolve = _.value.appearsIn map (e => Some(e))),
-        Field("homePlanet", OptionType(StringType),
-          Some("The home planet of the human, or null if unknown."),
-          resolve = _.value.homePlanet)
+        Field("knowsFighting", OptionType(BooleanType),
+          Some("if he knows o fight."),
+          resolve = _.value.knowsFighting   ),
       ))
 
-  val Droid = ObjectType(
-    "Droid",
-    "A mechanical creature in the Star Wars universe.",
-    interfaces[CharacterRepo, Droid](Character),
-    fields[CharacterRepo, Droid](
+  val Dog = ObjectType(
+    "Dog",
+    "A dog.",
+    interfaces[AnimalRepo, Dog](Animal),
+    fields[AnimalRepo, Dog](
       Field("id", StringType,
-        Some("The id of the droid."),
+        Some("The id of the dog."),
         resolve = _.value.id),
       Field("name", OptionType(StringType),
-        Some("The name of the droid."),
+        Some("The name of the dog."),
         resolve = ctx => Future.successful(ctx.value.name)),
-      Field("friends", ListType(Character),
-        Some("The friends of the droid, or an empty list if they have none."),
-        resolve = ctx => characters.deferSeqOpt(ctx.value.friends)),
-      Field("appearsIn", OptionType(ListType(OptionType(EpisodeEnum))),
-        Some("Which movies they appear in."),
+      Field("friends", ListType(Animal),
+        Some("The friends of the dog, or an empty list if they have none."),
+        resolve = ctx => animals.deferSeqOpt(ctx.value.friends)),
+      Field("appearsIn", OptionType(ListType(OptionType(AreaEnum))),
+        Some("Which area they appear in."),
         resolve = _.value.appearsIn map (e => Some(e))),
       Field("primaryFunction", OptionType(StringType),
-        Some("The primary function of the droid."),
+        Some("The primary function of the dog."),
         resolve = _.value.primaryFunction)
     ))
 
-  val ID = Argument("id", StringType, description = "id of the character")
+  val ID = Argument("id", StringType, description = "id of the animal")
 
-  val EpisodeArg = Argument("episode", OptionInputType(EpisodeEnum),
-    description = "If omitted, returns the hero of the whole saga. If provided, returns the hero of that particular episode.")
+  val AreaArg = Argument("area", OptionInputType(AreaEnum),
+    description = "If omitted, returns the main dog of the whole universe. If provided, returns the hero of that particular area.")
 
   val LimitArg = Argument("limit", OptionInputType(IntType), defaultValue = 20)
   val OffsetArg = Argument("offset", OptionInputType(IntType), defaultValue = 0)
 
   val Query = ObjectType(
-    "Query", fields[CharacterRepo, Unit](
-      Field("hero", Character,
-        arguments = EpisodeArg :: Nil,
-        deprecationReason = Some("Use `human` or `droid` fields instead"),
-        resolve = (ctx) => ctx.ctx.getHero(ctx.arg(EpisodeArg))),
-      Field("human", OptionType(Human),
+    "Query", fields[AnimalRepo, Unit](
+      Field("areaMain", Animal,
+        arguments = AreaArg :: Nil,
+        resolve = (ctx) => ctx.ctx.getDogsNearby(ctx.arg(AreaArg))),
+      Field("dog", OptionType(Dog),
         arguments = ID :: Nil,
-        resolve = ctx => ctx.ctx.getHuman(ctx arg ID)),
-      Field("droid", Droid,
+        resolve = ctx => ctx.ctx.getDog(ctx arg ID)),
+      Field("bear", Bear,
         arguments = ID :: Nil,
-        resolve = ctx => ctx.ctx.getDroid(ctx arg ID).get),
-      Field("humans", ListType(Human),
+        resolve = ctx => ctx.ctx.getBear(ctx arg ID).get),
+      Field("dogs", ListType(Dog),
         arguments = LimitArg :: OffsetArg :: Nil,
-        resolve = ctx => ctx.ctx.getHumans(ctx arg LimitArg, ctx arg OffsetArg)),
-      Field("droids", ListType(Droid),
+        resolve = ctx => ctx.ctx.getDogs(ctx arg LimitArg, ctx arg OffsetArg)),
+      Field("bears", ListType(Bear),
         arguments = LimitArg :: OffsetArg :: Nil,
-        resolve = ctx => ctx.ctx.getDroids(ctx arg LimitArg, ctx arg OffsetArg))
+        resolve = ctx => ctx.ctx.getBears(ctx arg LimitArg, ctx arg OffsetArg))
     ))
 
-  val StarWarsSchema = Schema(Query)
+
+  implicit val Name_implicit: InputObjectType[Dog] = derive.deriveInputObjectType[Dog](
+    InputObjectTypeName("NAME_IMPLICIT")
+  )
+
+  val NameArg = Argument("name",OptionInputType(StringType),"name of the dog.")
+
+  val Mutation = ObjectType(
+    "Mutation",
+    fields[AnimalRepo, Unit](
+      Field("addDog",
+        Dog,
+        arguments = ID :: Nil,
+        resolve = c => c.ctx.addDog(c arg NameArg)
+      )
+    )
+  )
+
+  val AnimalSagaSchema = Schema(Query)
 }
