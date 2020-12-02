@@ -121,10 +121,6 @@ object SchemaDefinition {
     ))
 
 
-  implicit val Name_implicit: InputObjectType[Dog] = derive.deriveInputObjectType[Dog](
-    InputObjectTypeName("NAME_IMPLICIT")
-  )
-
   val NameArg = Argument("name",OptionInputType(StringType),"name of the dog.")
 
   val Mutation = ObjectType(

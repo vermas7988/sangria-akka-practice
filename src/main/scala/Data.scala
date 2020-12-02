@@ -38,7 +38,9 @@ class AnimalRepo {
   def getBears(limit: Int, offset: Int): List[Bear] = bears.slice(offset, offset + limit)
 
   def addDog(name:Option[String]) = {
-    dogs = Dog("10000",name,List("1002", "1003", "2000", "2001"), List(Area.AFRICA, Area.ASIA, Area.EUROPE),Some("Fighting")) :: dogs
+    val newDog = Dog("10000",name,List("1002", "1003", "2000", "2001"), List(Area.AFRICA, Area.ASIA, Area.EUROPE),Some("Fighting"))
+    dogs = newDog :: dogs
+    newDog
   }
 }
 
