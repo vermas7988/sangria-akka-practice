@@ -138,5 +138,5 @@ object SchemaDefinition {
     )
   )
 
-  val AnimalSagaSchema = Schema(Query)
+  val AnimalSagaSchema = Schema(Query, Some(Mutation))
 }
