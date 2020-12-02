@@ -128,7 +128,7 @@ object SchemaDefinition {
     fields[AnimalRepo, Unit](
       Field("addDog",
         Dog,
-        arguments = ID :: Nil,
+        arguments = NameArg :: Nil,
         resolve = c => c.ctx.addDog(c arg NameArg)
       )
     )
